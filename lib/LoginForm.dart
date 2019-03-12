@@ -117,7 +117,7 @@ class LoginFormState extends State<LoginForm> {
        _isLoading = true; 
       });
       try{
-        await _auth.signInWithEmailAndPassword(email: textValue1.text, password: textValue2.text);
+        FirebaseUser user = await _auth.signInWithEmailAndPassword(email: textValue1.text, password: textValue2.text);
         setState(() {
          _isLoading = false; 
         });

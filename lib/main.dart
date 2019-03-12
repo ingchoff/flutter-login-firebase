@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_assignment/LoginForm.dart';
-import 'package:flutter_assignment/MainPage.dart';
-import 'package:flutter_assignment/RegisForm.dart';
 
 void main() => runApp(MyApp());
 

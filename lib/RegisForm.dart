@@ -27,7 +27,8 @@ class RegisterFormState extends State<RegisterForm> {
   final password = TextEditingController();
   final conPassword = TextEditingController();
   bool _isLoading = false;
-  final formatter = new DateFormat('yyyyMMdd kk:mm');
+  bool _notHaveDname = false;
+  final formatter = new DateFormat('yyyy-MM-dd kk:mm');
 
    @override
   void dispose() {
@@ -212,6 +213,16 @@ class RegisterFormState extends State<RegisterForm> {
                 onPressed: signUp,
                   )
                 ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 30),
+              child: SizedBox(
+              height: 40,
+              child: RaisedButton(
+                child: setUpButtonChild(),
+                onPressed: () => checkDname(dname.text),
+                  )
+                ),
             )
             
           ],
@@ -228,57 +239,84 @@ class RegisterFormState extends State<RegisterForm> {
     }
   }
 
+  Future<void> checkDname(dname) async {
+    String txt;
+    QuerySnapshot users = await store.collection('users').getDocuments();
+    for(var i=0;i<users.documents.length;i++) {
+      txt = users.documents[i].data['dname'];
+      if(dname == txt) {
+        _notHaveDname = false;
+        break;
+      } else {
+        _notHaveDname = true;
+      }
+    }
+    print(_notHaveDname);
+  }
+
   Future<void> signUp() async {
     final scaffoldState =_scaffoldKey.currentState;
     final formState = _formkey.currentState;
-    print(fname.text);
-    print(lname.text);
     if(route == 0) {
       sex = 'male';
     }else {
       sex = 'female';
     }
-    print(sex);
-    print(dname.text);
-    print(birthday.text);
-    print(email.text);
-    print(password.text);
-    print(conPassword.text);
     if(formState.validate() && password.text == conPassword.text){
       formState.save();
       setState(() {
        _isLoading = true; 
       });
-      try{
-        FirebaseUser user = await _auth.createUserWithEmailAndPassword(email: email.text, password: password.text);
-        user.sendEmailVerification();
-        print(user.uid);
-        store.collection('users').document(user.uid).setData({
-          'fname':fname.text,
-          'lname':lname.text,
-          'gender':sex,
-          'email':email.text,
-          'dname':dname.text,
-          'birthdate':birthday.text,
-          'joinDate':formatter.format(DateTime.now()),
-          'friend':['user_id']});
-        setState(() {
-         _isLoading = false; 
-        });
-        scaffoldState.showSnackBar(new SnackBar(
-          content: new Text('สมัครเรียบร้อย'),
-        ));
-        Navigator.of(context).pop();
-      }catch(e){
-        print(e.message);
-        setState(() {
-         _isLoading = false; 
-        });
-        if(e.message == 'The email address is already in use by another account.') {
-          scaffoldState.showSnackBar(new SnackBar(
-            content: new Text('Email นี้ถูกใช้แล้ว'),
-          ));
+      String txt;
+      QuerySnapshot users = await store.collection('users').getDocuments();
+      for(var i=0;i<users.documents.length;i++) {
+        txt = users.documents[i].data['dname'];
+        if(dname.text == txt) {
+          _notHaveDname = false;
+          break;
+        } else {
+          _notHaveDname = true;
         }
+      }
+      // print(_notHaveDname);
+      if (_notHaveDname) {
+        try{
+            FirebaseUser user = await _auth.createUserWithEmailAndPassword(email: email.text, password: password.text);
+            user.sendEmailVerification();
+            print(user.uid);
+            store.collection('users').document(user.uid).setData({
+              'fname':fname.text,
+              'lname':lname.text,
+              'gender':sex,
+              'email':email.text,
+              'dname':dname.text,
+              'birthdate':birthday.text,
+              'joinDate':formatter.format(DateTime.now()),
+              'friend':['user_id']});
+            setState(() {
+            _isLoading = false; 
+            });
+            scaffoldState.showSnackBar(new SnackBar(
+              content: new Text('สมัครเรียบร้อย'),
+            ));
+            Navigator.of(context).pop();
+        }catch(e){
+          setState(() {
+          _isLoading = false; 
+          });
+          if(e.message == 'The email address is already in use by another account.') {
+            scaffoldState.showSnackBar(new SnackBar(
+              content: new Text('Email นี้ถูกใช้แล้ว'),
+            ));
+          }
+        }
+      } else {
+          setState(() {
+          _isLoading = false;
+          });
+          scaffoldState.showSnackBar(new SnackBar(
+            content: new Text('Display Name นี้ถูกใช้แล้ว'),
+          ));
       }
     }else if (formState.validate() && password.text != conPassword.text){
       scaffoldState.showSnackBar(new SnackBar(
