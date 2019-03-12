@@ -13,38 +13,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: appTitle,
       home: Scaffold(
-        // appBar: AppBar(
-        //   title: Text(appTitle),
-        // ),
         body: LoginForm(),
       ),
-      // initialRoute: '/',
-      routes: {
-        '/regis': (context) => RegisterForm(),
-        '/main': (context) => MainPage()
-      },
     );
   }
 }
-// void main() => runApp(MyApp());
-
-// class MyApp extends StatelessWidget {
-//   final routes = <String, WidgetBuilder>{
-//     LoginPage.tag: (context) => LoginForm(),
-//     // HomePage.tag: (context) => HomePage(),
-//   };
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Kodeversitas',
-//       debugShowCheckedModeBanner: false,
-//       theme: ThemeData(
-//         primarySwatch: Colors.lightBlue,
-//         fontFamily: 'Nunito',
-//       ),
-//       home: LoginForm(),
-//       routes: routes,
-//     );
-//   }
-// }
