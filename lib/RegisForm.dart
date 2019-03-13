@@ -22,7 +22,7 @@ class RegisterFormState extends State<RegisterForm> {
   final lname = TextEditingController();
   final dname =TextEditingController();
   final email = TextEditingController();
-  String sex;
+  String sex = 'male';
   final birthday = TextEditingController();
   final password = TextEditingController();
   final conPassword = TextEditingController();
@@ -97,7 +97,6 @@ class RegisterFormState extends State<RegisterForm> {
                      route = value;
                      if(route == 0) {
                        sex = 'male';
-                       print(sex);
                      }
                     });
                   },
@@ -111,7 +110,6 @@ class RegisterFormState extends State<RegisterForm> {
                      route = value; 
                      if(route == 1) {
                        sex = 'female';
-                       print(sex);
                      }
                     });
                   },
@@ -207,24 +205,17 @@ class RegisterFormState extends State<RegisterForm> {
             Padding(
               padding: EdgeInsets.symmetric(vertical: 30),
               child: SizedBox(
-              height: 40,
+              height: 50,
               child: RaisedButton(
+                color: Colors.amberAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
                 child: setUpButtonChild(),
                 onPressed: signUp,
                   )
                 ),
             ),
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 30),
-              child: SizedBox(
-              height: 40,
-              child: RaisedButton(
-                child: setUpButtonChild(),
-                onPressed: () => checkDname(dname.text),
-                  )
-                ),
-            )
-            
           ],
         ),
       )
@@ -257,11 +248,11 @@ class RegisterFormState extends State<RegisterForm> {
   Future<void> signUp() async {
     final scaffoldState =_scaffoldKey.currentState;
     final formState = _formkey.currentState;
-    if(route == 0) {
-      sex = 'male';
-    }else {
-      sex = 'female';
-    }
+    // if(route == 0) {
+    //   sex = 'male';
+    // }else {
+    //   sex = 'female';
+    // }
     if(formState.validate() && password.text == conPassword.text){
       formState.save();
       setState(() {
@@ -290,7 +281,7 @@ class RegisterFormState extends State<RegisterForm> {
               'gender':sex,
               'email':email.text,
               'dname':dname.text,
-              'birthdate':birthday.text,
+              'birthdate': int.parse(birthday.text),
               'joinDate':formatter.format(DateTime.now()),
               'friend':['user_id']});
             setState(() {

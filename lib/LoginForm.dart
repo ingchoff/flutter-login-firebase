@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_assignment/MainPage.dart';
@@ -24,7 +23,6 @@ class LoginFormState extends State<LoginForm> {
   @override
   void dispose() {
     // Clean up the controller when the Widget is removed from the Widget tree
-    // This also removes the _printLatestValue listener
     textValue1.dispose();
     textValue2.dispose();
     super.dispose();
@@ -49,32 +47,30 @@ class LoginFormState extends State<LoginForm> {
               validator: (String value) {
                 if (value.isEmpty) {
                   return 'Please, enter Email';
-                }else if(value == 'admin') {
-                  return 'not permission';
                 }
               },
               controller: textValue1,
               decoration: InputDecoration(
                 labelText: 'Email',
                 prefixIcon: Icon(Icons.person),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(32.0)),
               ),
             ),
           ),
           Padding(
-            padding: EdgeInsets.only(bottom: 10),
+            padding: EdgeInsets.only(top: 20, bottom: 30),
             child: TextFormField(
               keyboardType: TextInputType.text,
               validator: (String value) {
                 if (value.isEmpty) {
                   return 'Please, enter password';
-                }else if(value == 'admin'){
-                  return 'not permission';
                 }
               },
               controller: textValue2,
               decoration: InputDecoration(
                 labelText: 'Password',
-                prefixIcon: Icon(Icons.https)
+                prefixIcon: Icon(Icons.https),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(32.0)),
               ),
               obscureText: true,
               ),
@@ -84,8 +80,12 @@ class LoginFormState extends State<LoginForm> {
             child: SizedBox(
               height: 50,
               child: RaisedButton(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
                 onPressed: signIn,
                 child: setUpButtonChild(),
+                color: Colors.lightBlueAccent,
               ),
             )
           ),
@@ -93,7 +93,7 @@ class LoginFormState extends State<LoginForm> {
             onPressed: (){
               Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterForm()));
               },
-            child: Text('Register New Account',style: TextStyle(color: Colors.teal),textAlign: TextAlign.right,),
+            child: Text('Register New Account',style: TextStyle(color: Colors.teal, fontSize: 16),textAlign: TextAlign.right,),
           ),
           // _showCircularProgress(),
         ]
@@ -103,10 +103,37 @@ class LoginFormState extends State<LoginForm> {
 
   Widget setUpButtonChild() {
     if (_isLoading) {
-      return CircularProgressIndicator();
+      return CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.white),);
     }else {
       return new Text('LOGIN');
     }
+  }
+
+  void _showDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)
+          ),
+          title: new Text("Please, Verify Email"),
+          content: new Text("โปรดยืนยัน Email ก่อนเข้าสู่ระบบ"),
+          actions: <Widget>[
+            new FlatButton(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20)
+              ),
+              color: Colors.lightBlueAccent,
+              child: new Text("OK",style: TextStyle(color: Colors.black),),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            )
+          ],
+        );
+      }
+    );
   }
 
   Future<void> signIn() async {
@@ -117,11 +144,21 @@ class LoginFormState extends State<LoginForm> {
        _isLoading = true; 
       });
       try{
+        // Login
         FirebaseUser user = await _auth.signInWithEmailAndPassword(email: textValue1.text, password: textValue2.text);
-        setState(() {
-         _isLoading = false; 
-        });
-        Navigator.push(context, MaterialPageRoute(builder: (context) => MainPage()));
+        //เวลาจะเอาค่า user id มาใช้สามารถ ใช้ user.uid ได้เลย
+        if (user.isEmailVerified) {
+          setState(() {
+          _isLoading = false; 
+          });
+          //ถ้า Login สำเร็จจะไปที่หน้าหลัก
+          Navigator.push(context, MaterialPageRoute(builder: (context) => MainPage(user: user)));
+        } else {
+          setState(() {
+            _isLoading = false;
+          });
+          _showDialog();
+        }
       }catch(e){
         print(e.message);
         setState(() {

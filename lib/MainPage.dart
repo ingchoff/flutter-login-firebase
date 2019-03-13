@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MainPage extends StatelessWidget {
+  const MainPage({
+    Key key,
+    @required this.user
+  }) : super(key : key);
+  final FirebaseUser user;
+
   @override
   Widget build(BuildContext context) {
     
     final first = new Center(
-      child: new Text('Home', textAlign: TextAlign.center, style: new TextStyle(color: Colors.grey,fontSize: 30,fontWeight: FontWeight.bold)),
+      child: new Text('Welcome  '+user.email, textAlign: TextAlign.center, style: new TextStyle(color: Colors.grey,fontSize: 30,fontWeight: FontWeight.bold)),
     );
 
     final second = new Center(
