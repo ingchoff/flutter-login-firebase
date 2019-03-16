@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 final Firestore store = Firestore.instance;
@@ -29,8 +32,15 @@ class RegisterFormState extends State<RegisterForm> {
   bool _isLoading = false;
   bool _notHaveDname = false;
   final formatter = new DateFormat('yyyy-MM-dd kk:mm');
+  String txt;
 
-   @override
+  @override
+  void initState(){
+    readFile('userId').then((String value) {
+      txt = value;
+    });
+  }
+  @override
   void dispose() {
     // Clean up the controller when the Widget is removed from the Widget tree
     // This also removes the _printLatestValue listener
@@ -54,6 +64,10 @@ class RegisterFormState extends State<RegisterForm> {
           shrinkWrap: true,
           padding: EdgeInsets.only(left: 24.0, right: 24.0),
           children: <Widget>[
+            Padding(
+              padding: EdgeInsets.only(top: 20),
+              child: Text(txt)
+            ),
             Padding(
               padding: EdgeInsets.only(top: 20),
               child: TextFormField(
@@ -216,6 +230,13 @@ class RegisterFormState extends State<RegisterForm> {
                   )
                 ),
             ),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 1),
+              child: RaisedButton(
+                onPressed: () => readFile('email'),
+                child: Text('data'),
+              )
+            ),
           ],
         ),
       )
@@ -248,11 +269,6 @@ class RegisterFormState extends State<RegisterForm> {
   Future<void> signUp() async {
     final scaffoldState =_scaffoldKey.currentState;
     final formState = _formkey.currentState;
-    // if(route == 0) {
-    //   sex = 'male';
-    // }else {
-    //   sex = 'female';
-    // }
     if(formState.validate() && password.text == conPassword.text){
       formState.save();
       setState(() {
@@ -269,7 +285,6 @@ class RegisterFormState extends State<RegisterForm> {
           _notHaveDname = true;
         }
       }
-      // print(_notHaveDname);
       if (_notHaveDname) {
         try{
             FirebaseUser user = await _auth.createUserWithEmailAndPassword(email: email.text, password: password.text);
@@ -313,6 +328,31 @@ class RegisterFormState extends State<RegisterForm> {
       scaffoldState.showSnackBar(new SnackBar(
         content: new Text('กรุณากรอก Confirm Password ให้ถูกต้อง'),
       ));
+    }
+  }
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    print(path);
+    return File('$path/data.txt');
+  }
+  Future<String> readFile(String key) async {
+    try {
+      final file = await _localFile;
+      // Read the file
+      Map contents = json.decode(await file.readAsString());
+      // final data_json = jsonDecode(contents);
+      setState(() {
+       txt = contents[key]; 
+      });
+      print(contents);
+      return contents[key];
+    } catch (e) {
+      print(e);
     }
   }
 }

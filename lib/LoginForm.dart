@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_assignment/MainPage.dart';
 import 'package:flutter_assignment/RegisForm.dart';
 
@@ -27,7 +30,7 @@ class LoginFormState extends State<LoginForm> {
     textValue2.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -146,19 +149,21 @@ class LoginFormState extends State<LoginForm> {
       try{
         // Login
         FirebaseUser user = await _auth.signInWithEmailAndPassword(email: textValue1.text, password: textValue2.text);
-        //เวลาจะเอาค่า user id มาใช้สามารถ ใช้ user.uid ได้เลย
-        if (user.isEmailVerified) {
+        // if (user.isEmailVerified) {
           setState(() {
-          _isLoading = false; 
+          _isLoading = false;
           });
-          //ถ้า Login สำเร็จจะไปที่หน้าหลัก
-          Navigator.push(context, MaterialPageRoute(builder: (context) => MainPage(user: user)));
-        } else {
-          setState(() {
-            _isLoading = false;
-          });
-          _showDialog();
-        }
+          writeFile(user);
+          readFile('userId');
+          //ถ้า Login สำเร็จจะไปที่หน้าหลักโดยมีการส่งค่า user ที่ login ไปหน้าหลัก
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => MainPage(user: user)));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterForm()));
+        // } else {
+          // setState(() {
+            // _isLoading = false;
+          // });
+          // _showDialog();
+        // }
       }catch(e){
         print(e.message);
         setState(() {
@@ -168,12 +173,49 @@ class LoginFormState extends State<LoginForm> {
           Scaffold.of(context).showSnackBar(new SnackBar(
             content: new Text('Email ไม่ถูกต้อง'),
           ));
-        }else if(e.message == 'The password is invalid or the user does not have a password.') {
+        } else if(e.message == 'The password is invalid or the user does not have a password.') {
           Scaffold.of(context).showSnackBar(new SnackBar(
             content: new Text('Password ไม่ถูกต้อง'),
           ));
+        } else if(e.message == 'There is no user record corresponding to this identifier. The user may have been deleted.') {
+          Scaffold.of(context).showSnackBar(new SnackBar(
+            content: new Text('ไม่พบ Email นี้ในระบบ'),
+          ));
         }
       }
+    }
+  }
+
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+  
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    print(path);
+    return File('$path/data.txt');
+  }
+  //เก็บค่า uid และ email ไว้ในไฟล์ data.txt
+  Future<File> writeFile(user) async {
+    final file = await _localFile;
+    String data = '{"userId":'+'"'+user.uid+'"'+',"email":"'+user.email+'"}';
+    print(data);
+    // Write the file
+    return file.writeAsString(data);
+  }
+
+  Future<String> readFile(String key) async {
+    try {
+      final file = await _localFile;
+      // Read the file
+      Map contents = json.decode(await file.readAsString());
+      // final data_json = jsonDecode(contents);
+      print(contents[key]);
+      return contents[key];
+    } catch (e) {
+      // If encountering an error, return 0
+      print(e);
     }
   }
 }
