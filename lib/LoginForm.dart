@@ -3,11 +3,11 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_assignment/MainPageStorage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_assignment/MainPage.dart';
 import 'package:flutter_assignment/RegisForm.dart';
 
-// final GoogleSignIn _googleSignIn = GoogleSignIn();
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
 class LoginForm extends StatefulWidget {
@@ -26,9 +26,9 @@ class LoginFormState extends State<LoginForm> {
   @override
   void dispose() {
     // Clean up the controller when the Widget is removed from the Widget tree
-    textValue1.dispose();
-    textValue2.dispose();
-    super.dispose();
+    textValue1.clear();
+    textValue2.clear();
+    super.initState();
   }
 
   @override
@@ -149,21 +149,20 @@ class LoginFormState extends State<LoginForm> {
       try{
         // Login
         FirebaseUser user = await _auth.signInWithEmailAndPassword(email: textValue1.text, password: textValue2.text);
-        // if (user.isEmailVerified) {
+        if (user.isEmailVerified) {
           setState(() {
           _isLoading = false;
           });
           writeFile(user);
-          readFile('userId');
           //ถ้า Login สำเร็จจะไปที่หน้าหลักโดยมีการส่งค่า user ที่ login ไปหน้าหลัก
           // Navigator.push(context, MaterialPageRoute(builder: (context) => MainPage(user: user)));
-          Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterForm()));
-        // } else {
-          // setState(() {
-            // _isLoading = false;
-          // });
-          // _showDialog();
-        // }
+          Navigator.push(context, MaterialPageRoute(builder: (context) => MainPageStorage()));
+        } else {
+          setState(() {
+            _isLoading = false;
+          });
+          _showDialog();
+        }
       }catch(e){
         print(e.message);
         setState(() {
@@ -210,7 +209,6 @@ class LoginFormState extends State<LoginForm> {
       final file = await _localFile;
       // Read the file
       Map contents = json.decode(await file.readAsString());
-      // final data_json = jsonDecode(contents);
       print(contents[key]);
       return contents[key];
     } catch (e) {
