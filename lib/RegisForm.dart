@@ -252,7 +252,7 @@ class RegisterFormState extends State<RegisterForm> {
     if(formState.validate() && password.text == conPassword.text){
       formState.save();
       setState(() {
-       _isLoading = true; 
+       _isLoading = true;
       });
       String txt;
       QuerySnapshot users = await store.collection('users').getDocuments();

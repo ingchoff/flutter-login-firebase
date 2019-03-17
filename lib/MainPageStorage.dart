@@ -19,6 +19,8 @@ class MainPageStorageState extends State<MainPageStorage> {
   @override
   void initState() {
     super.initState();
+    //อ่านค่า email ของ uid ที่ signin เข้ามา ในไฟล์ data.txt
+    // readFile('ชื่อ key ที่อยากดึง value มาใข้')
     readFile('email').then((String value) {
       txt = value;
     });
@@ -61,15 +63,15 @@ class MainPageStorageState extends State<MainPageStorage> {
       final file = await _localFile;
       // Read the file
       Map contents = json.decode(await file.readAsString());
-      // final data_json = jsonDecode(contents);
       setState(() {
-       txt = contents[key]; 
+       txt = contents[key];
       });
-      print(contents);
-      print(contents[key]);
-      return contents[key];
+      print(contents); // พิม data ในรูปแบบ json บน console
+      print(contents[key]); // พิม data ตาม key ที่เราใส่เข้าไปในรูปแบบ string บน console
+      return contents[key]; //ส่งค่ากลับ ตาม key ที่เราใส่เข้าไปในรูปแบบ string
     } catch (e) {
       print(e);
+      return e;
     }
   }
 

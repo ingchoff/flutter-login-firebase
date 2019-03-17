@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_assignment/MainPageStorage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_assignment/MainPage.dart';
@@ -18,17 +19,41 @@ class LoginForm extends StatefulWidget {
 }
 
 class LoginFormState extends State<LoginForm> {
+  FirebaseMessaging _firebaseMessaging = new FirebaseMessaging();
+  final Firestore store = Firestore.instance;
   bool _isLoading = false;
 	final _formKey = GlobalKey<FormState>();
   final textValue1 = TextEditingController();
   final textValue2 = TextEditingController();
+  String token;
+
+  @override
+  void initState() {
+    super.initState();
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message){
+        print('on message $message');
+      },
+      onResume: (Map<String, dynamic> message){
+        print('on resume $message');
+      },
+      onLaunch: (Map<String, dynamic> message){
+        print('on launch $message');
+      }
+    );
+    // _firebaseMessaging.onTokenRefresh;
+    _firebaseMessaging.getToken().then((String value){
+      token = value;
+      print(token);
+    });
+  }
 
   @override
   void dispose() {
     // Clean up the controller when the Widget is removed from the Widget tree
     textValue1.clear();
     textValue2.clear();
-    super.initState();
+    super.dispose();
   }
 
   @override
@@ -95,10 +120,9 @@ class LoginFormState extends State<LoginForm> {
           FlatButton(
             onPressed: (){
               Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterForm()));
-              },
+            },
             child: Text('Register New Account',style: TextStyle(color: Colors.teal, fontSize: 16),textAlign: TextAlign.right,),
           ),
-          // _showCircularProgress(),
         ]
       )
     );
@@ -147,16 +171,24 @@ class LoginFormState extends State<LoginForm> {
        _isLoading = true; 
       });
       try{
-        // Login
+        // Sign in
         FirebaseUser user = await _auth.signInWithEmailAndPassword(email: textValue1.text, password: textValue2.text);
+        //check ยืนยัน email
         if (user.isEmailVerified) {
           setState(() {
-          _isLoading = false;
+            _isLoading = false;
           });
-          writeFile(user);
+          //get token
+          _firebaseMessaging.getToken().then((String value){
+            token = value;
+          });
+          store.collection('users').document(user.uid).setData({ //add noti_token เก็บบน cloud firestore
+            'noti_token':token
+          },merge: true);
+          writeFile(user,token); //save ค่า uid, email, token ลง data.txt
           //ถ้า Login สำเร็จจะไปที่หน้าหลักโดยมีการส่งค่า user ที่ login ไปหน้าหลัก
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => MainPage(user: user)));
-          Navigator.push(context, MaterialPageRoute(builder: (context) => MainPageStorage()));
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => MainPage(user: user))); 
+          Navigator.push(context, MaterialPageRoute(builder: (context) => MainPageStorage()));//ถ้า Login สำเร็จจะไปที่หน้าหลักที่มีการดึงข้อมูลมาจาก local storage
         } else {
           setState(() {
             _isLoading = false;
@@ -185,35 +217,22 @@ class LoginFormState extends State<LoginForm> {
     }
   }
 
+  //หา local path ของแอพ
   Future<String> get _localPath async {
     final directory = await getApplicationDocumentsDirectory();
     return directory.path;
   }
-  
+  //สร้างไฟล์ data.txt
   Future<File> get _localFile async {
     final path = await _localPath;
     print(path);
     return File('$path/data.txt');
   }
   //เก็บค่า uid และ email ไว้ในไฟล์ data.txt
-  Future<File> writeFile(user) async {
+  Future<File> writeFile(user,token) async {
     final file = await _localFile;
-    String data = '{"userId":'+'"'+user.uid+'"'+',"email":"'+user.email+'"}';
+    String data = '{"userId":'+'"'+user.uid+'"'+',"email":"'+user.email+'"'+',"token":"$token"'+'}';
     print(data);
-    // Write the file
-    return file.writeAsString(data);
-  }
-
-  Future<String> readFile(String key) async {
-    try {
-      final file = await _localFile;
-      // Read the file
-      Map contents = json.decode(await file.readAsString());
-      print(contents[key]);
-      return contents[key];
-    } catch (e) {
-      // If encountering an error, return 0
-      print(e);
-    }
+    return file.writeAsString(data); // Write the file
   }
 }
